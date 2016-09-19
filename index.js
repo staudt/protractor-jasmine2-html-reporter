@@ -86,6 +86,7 @@ function Jasmine2HTMLReporter(options) {
     self.consolidateAll = self.consolidate !== false && (options.consolidateAll === UNDEFINED ? true : options.consolidateAll);
     self.filePrefix = options.filePrefix || (self.consolidateAll ? 'htmlReport' : 'htmlReport-');
     self.cleanDestination = options.cleanDestination === UNDEFINED ? true : options.cleanDestination;
+    self.showPassed = options.showPassed === UNDEFINED ? true : options.showPassed;
 
     var suites = [],
         currentSuite = null,
@@ -277,20 +278,22 @@ function Jasmine2HTMLReporter(options) {
 
         for (var i = 0; i < suite._specs.length; i++) {
             var spec = suite._specs[i];
-            html += '<div class="spec">';
-            html += specAsHtml(spec);
-                html += '<div class="resume">';
-                if (spec.screenshot !== UNDEFINED){
-                    html += '<a href="' + self.screenshotsFolder + spec.screenshot + '">';
-                    html += '<img src="' + self.screenshotsFolder + spec.screenshot + '" width="100" height="100" />';
-                    html += '</a>';
-                }
-                html += '<br />';
-                var num_tests= spec.failedExpectations.length + spec.passedExpectations.length;
-                var percentage = (spec.passedExpectations.length*100)/num_tests;
-                html += '<span>Tests passed: ' + parseDecimalRoundAndFixed(percentage,2) + '%</span><br /><progress max="100" value="' + Math.round(percentage) + '"></progress>';
+            if (self.showPassed || spec.failedExpectations.length > 0) {
+                html += '<div class="spec">';
+                html += specAsHtml(spec);
+                    html += '<div class="resume">';
+                    if (spec.screenshot !== UNDEFINED){
+                        html += '<a href="' + self.screenshotsFolder + spec.screenshot + '">';
+                        html += '<img src="' + self.screenshotsFolder + spec.screenshot + '" width="100" height="100" />';
+                        html += '</a>';
+                    }
+                    html += '<br />';
+                    var num_tests= spec.failedExpectations.length + spec.passedExpectations.length;
+                    var percentage = (spec.passedExpectations.length*100)/num_tests;
+                    html += '<span>Tests passed: ' + parseDecimalRoundAndFixed(percentage,2) + '%</span><br /><progress max="100" value="' + Math.round(percentage) + '"></progress>';
+                    html += '</div>';
                 html += '</div>';
-            html += '</div>';
+            }
         }
         html += '\n </article>';
         return html;
@@ -307,11 +310,13 @@ function Jasmine2HTMLReporter(options) {
                 html += expectation.message + '<span style="padding:0 1em;color:red;">&#10007;</span>';
                 html += '</li>';
             });
-            _.each(spec.passedExpectations, function(expectation){
-                html += '<li>';
-                html += expectation.message + '<span style="padding:0 1em;color:green;">&#10003;</span>';
-                html += '</li>';
-            });
+            if (self.showPassed) {
+                _.each(spec.passedExpectations, function(expectation){
+                    html += '<li>';
+                    html += expectation.message + '<span style="padding:0 1em;color:green;">&#10003;</span>';
+                    html += '</li>';
+                });
+            }
             html += '</ul></div>';
         }
         return html;
